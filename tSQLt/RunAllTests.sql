@@ -1,0 +1,4 @@
+EXEC tSQLt.RunAll;
+GO
+--SELECT @@VERSION,* FROM tSQLt.Info()
+--SELECT DB_NAME()

@@ -6,7 +6,7 @@
     <ProjectGuid>{EE661331-56F5-4FE6-90F9-69C54E2B75CA}</ProjectGuid>
     <DSP>Microsoft.Data.Tools.Schema.Sql.Sql150DatabaseSchemaProvider</DSP>
     <ModelCollation>1033, CI</ModelCollation>
-    <TargetFrameworkVersion>v7.0.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8.0</TargetFrameworkVersion>
   </PropertyGroup>
   <Target Name="BeforeBuild">
     <Delete Files="$(BaseIntermediateOutputPath)\project.assets.json" />

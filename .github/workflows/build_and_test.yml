@@ -56,7 +56,6 @@ jobs:
   create_ci_mssql_instance:
     name: Create CI MSSQL Instance
     runs-on: ubuntu-latest
-    if: false # This condition causes the job to be skipped
     
     steps:
 
@@ -126,9 +125,6 @@ jobs:
         with:
           dotnet-version: '4.8.0'
 
-      - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.0.3
-
       - name: Prepare SQL Server Instance
         shell: pwsh
         run: |
@@ -144,8 +140,41 @@ jobs:
 
           Invoke-Sqlcmd -InputFile "./tSQLt/PrepareServer.sql" -ServerInstance $env:containerFQDN -Username $env:containerUser -Password $env:containerPassword
 
+          $someOtherVar = "abc=12345;de f=67890;"
+          echo "some_other_var = $someOtherVar" | Out-File -Append -FilePath $env:GITHUB_ENV
 
-      # Runs a set of commands using the runners shell
+          $targetConnectionString = "Data Source="+$env:containerFQDN+";User ID="+$env:containerUser+";Password="+$env:containerPassword+";Pooling=False;Integrated Security=false";
+          echo "target_connection_string = $targetConnectionString" | Out-File -Append -FilePath $env:GITHUB_ENV
+
+      - name: Prepare SQL Server Instance
+        shell: pwsh
+        run: |
+
+          Write-Host $env:some_other_var;
+          Write-Host $env:target_connection_string;
+        env:
+          some_other_var: ${{ env.some_other_var }}
+          target_connection_string: ${{ env.target_connection_string }}
+
+      - name: Azure SQL Deploy
+        uses: Azure/sql-action@v2
+        with:
+          # The connection string, including authentication information, for the Azure SQL Server database.
+          connection-string: $target_connection_string
+          # Path to DACPAC file to deploy
+          path: .\DatabaseProjectAdventureWorksLT\bin\Release\DatabaseProjectAdventureWorksLT.dacpac
+          action: publish
+          # additional SqlPackage arguments
+          arguments: /DiagnosticsFile:DatabaseProjectAdventureWorksLT/DiagnosticLog.log
+        
+      - uses: actions/upload-artifact@v2
+        with:
+          name: 'DiagnosticLog.txt'
+          path: 'DatabaseProjectAdventureWorksLT/DiagnosticLog.log'
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.0.3
+        # Runs a set of commands using the runners shell
       - name: Build Database Solution
         shell: pwsh
         run: |

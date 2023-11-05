@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build">
-  <Sdk Name="Microsoft.Build.Sql" Version="0.1.7-preview" />
+  <Sdk Name="Microsoft.Build.Sql" Version="0.1.12-preview" />
   <PropertyGroup>
     <Name>Demo</Name>
-    <ProjectGuid>{DF9B11B9-0BB2-4460-9343-46A89FA58402}</ProjectGuid>
+    <ProjectGuid>{0BCA8BC1-DA00-4227-9686-9C276BA380A1}</ProjectGuid>
     <DSP>Microsoft.Data.Tools.Schema.Sql.Sql150DatabaseSchemaProvider</DSP>
     <ModelCollation>1033, CI</ModelCollation>
-    <TargetFrameworkVersion>v4.8.0</TargetFrameworkVersion>
   </PropertyGroup>
   <Target Name="BeforeBuild">
     <Delete Files="$(BaseIntermediateOutputPath)\project.assets.json" />

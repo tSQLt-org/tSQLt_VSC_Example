@@ -1,27 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build">
-  <Sdk Name="Microsoft.Build.Sql" Version="0.1.7-preview" />
+  <Sdk Name="Microsoft.Build.Sql" Version="0.1.12-preview" />
   <PropertyGroup>
     <Name>Tests</Name>
-    <ProjectGuid>{EE661331-56F5-4FE6-90F9-69C54E2B75CA}</ProjectGuid>
+    <ProjectGuid>{687FAEA4-0B1E-428A-A4CC-37BA7FB52E24}</ProjectGuid>
     <DSP>Microsoft.Data.Tools.Schema.Sql.Sql150DatabaseSchemaProvider</DSP>
     <ModelCollation>1033, CI</ModelCollation>
-    <TargetFrameworkVersion>v4.8.0</TargetFrameworkVersion>
   </PropertyGroup>
-  <Target Name="BeforeBuild">
-    <Delete Files="$(BaseIntermediateOutputPath)\project.assets.json" />
-  </Target>
+  <ItemGroup>
+    <ProjectReference Include="..\Demo\Demo.sqlproj">
+      <Name>Demo</Name>
+      <Project>{0BCA8BC1-DA00-4227-9686-9C276BA380A1}</Project>
+      <Private>True</Private>
+      <SuppressMissingDependenciesErrors>False</SuppressMissingDependenciesErrors>
+    </ProjectReference>
+  </ItemGroup>
   <ItemGroup>
     <ArtifactReference Include="..\tSQLt\tSQLt.2019.dacpac">
       <SuppressMissingDependenciesErrors>False</SuppressMissingDependenciesErrors>
     </ArtifactReference>
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Demo\Demo.sqlproj">
-      <Name>Demo</Name>
-      <Project>{DF9B11B9-0BB2-4460-9343-46A89FA58402}</Project>
-      <Private>True</Private>
-      <SuppressMissingDependenciesErrors>False</SuppressMissingDependenciesErrors>
-    </ProjectReference>
-  </ItemGroup>
+  <Target Name="BeforeBuild">
+    <Delete Files="$(BaseIntermediateOutputPath)\project.assets.json" />
+  </Target>
 </Project>

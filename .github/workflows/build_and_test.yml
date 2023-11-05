@@ -27,7 +27,7 @@ jobs:
       uses: microsoft/setup-msbuild@v1.1
 
     - name: Build .sqlproj
-      run: msbuild ./Tests/Tests.sqlproj /p:Configuration=Release /p:OutDir=./output/
+      run: msbuild ./Tests/Tests.sqlproj /p:Configuration=Release /p:OutDir=../output/
 
     - name: Upload DACPAC as Artifact
       uses: actions/upload-artifact@v3

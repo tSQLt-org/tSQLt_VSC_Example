@@ -145,8 +145,11 @@ jobs:
         shell: pwsh
         run: |
 
+          Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
           Write-Host $env:some_other_var;
           Write-Host $env:target_connection_string;
+          Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
+          
         # env:
         #   some_other_var: ${{ env.some_other_var }}
         #   target_connection_string: ${{ env.target_connection_string }}
@@ -155,17 +158,17 @@ jobs:
         uses: Azure/sql-action@v2
         with:
           # The connection string, including authentication information, for the Azure SQL Server database.
-          connection-string: $target_connection_string
+          connection-string: ${{ env.target_connection_string }}
           # Path to DACPAC file to deploy
-          path: .\DatabaseProjectAdventureWorksLT\bin\Release\DatabaseProjectAdventureWorksLT.dacpac
+          path: ./build_output/Demo.dacpac
           action: publish
           # additional SqlPackage arguments
-          arguments: /DiagnosticsFile:DatabaseProjectAdventureWorksLT/DiagnosticLog.log
+          arguments: /DiagnosticsFile:./build_output/DiagnosticLogDemo.log /TargetDatabaseName:Demo
         
       - uses: actions/upload-artifact@v2
         with:
-          name: 'DiagnosticLog.txt'
-          path: 'DatabaseProjectAdventureWorksLT/DiagnosticLog.log'
+          name: 'DiagnosticLog'
+          path: 'DatabaseProjectAdventureWorksLT/DiagnosticLog*.log'
 
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v1.0.3

@@ -16,10 +16,29 @@ env:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
+  buildtmp:
+    name: Build .sqlproj and Generate .dacpac
+    runs-on: windows-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup MSBuild path
+      uses: microsoft/setup-msbuild@v1.1
+
+    - name: Build .sqlproj
+      run: msbuild ./Tests/Tests.sqlproj /p:Configuration=Release /p:OutDir=./output/
+
+    - name: Upload DACPAC as Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: dacpac
+        path: ./output/*.dacpac
+
   create_ci_mssql_instance:
     name: Create CI MSSQL Instance
     runs-on: ubuntu-latest
-    
+    if: false # This condition causes the job to be skipped
     
     steps:
 

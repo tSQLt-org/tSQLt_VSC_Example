@@ -6,6 +6,7 @@
     <ProjectGuid>{687FAEA4-0B1E-428A-A4CC-37BA7FB52E24}</ProjectGuid>
     <DSP>Microsoft.Data.Tools.Schema.Sql.Sql150DatabaseSchemaProvider</DSP>
     <ModelCollation>1033, CI</ModelCollation>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Demo\Demo.sqlproj">

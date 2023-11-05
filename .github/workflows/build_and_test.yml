@@ -16,8 +16,8 @@ env:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
-  buildtmp:
-    name: Build .sqlproj and Generate .dacpac
+  build:
+    name: Build Database Project
     runs-on: windows-latest
     steps:
     - name: Checkout code
@@ -35,6 +35,24 @@ jobs:
         name: dacpac
         path: ./output/*.dacpac
 
+  deploytp:
+    name: Deploy Database Project
+    needs: [build]
+
+    runs-on: windows-latest
+
+
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: Download DACPAC Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: dacpac
+          path: ./build_output/
+      
   create_ci_mssql_instance:
     name: Create CI MSSQL Instance
     runs-on: ubuntu-latest
@@ -81,9 +99,9 @@ jobs:
       containerPassword: ${{ steps.create-container.outputs.dataContainerPassword }} 
 
 
-  build:
-    name: Build Database Solution
-    needs: [create_ci_mssql_instance]
+  deploy:
+    name: Deploy Database Project
+    needs: [build, create_ci_mssql_instance]
 
     runs-on: windows-latest
 
@@ -96,6 +114,12 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
+
+      - name: Download DACPAC Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: dacpac
+          path: ./build_output/
 
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v2
@@ -131,9 +155,9 @@ jobs:
           msbuild.exe .\Tests\Tests.sqlproj -p:Configuration=Debug -p:TargetConnectionString="$targetConnectionString" -p:TargetDatabase="$env:targetDatabase" -p:CreateNewDatabase="true" -t:Build -t:Deploy
 
 
-  validate_build:
+  validate:
     name: Validate Database Solution
-    needs: [build, create_ci_mssql_instance]
+    needs: [deploy, create_ci_mssql_instance]
 
     # The type of runner that the job will run on
     runs-on: windows-latest

@@ -120,11 +120,6 @@ jobs:
           name: dacpac
           path: ./build_output/
 
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v2
-        with:
-          dotnet-version: '4.8.0'
-
       - name: Prepare SQL Server Instance
         shell: pwsh
         run: |

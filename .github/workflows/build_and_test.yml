@@ -146,13 +146,13 @@ jobs:
         run: |
 
           Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
-          Write-Host $env:some_other_var;
-          Write-Host $env:target_connection_string;
+          Write-Host "some_other_var = $env:some_other_var";
+          Write-Host "target_connection_string = $env:target_connection_string";
           Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
-          
-        # env:
-        #   some_other_var: ${{ env.some_other_var }}
-        #   target_connection_string: ${{ env.target_connection_string }}
+
+        env:
+          sov: ${{ env.some_other_var }}
+          tcs: ${{ env.target_connection_string }}
 
       - name: Azure SQL Deploy
         uses: Azure/sql-action@v2

@@ -141,15 +141,15 @@ jobs:
           $targetConnectionString = "Data Source="+$env:containerFQDN+";User ID="+$env:containerUser+";Password="+$env:containerPassword+";Pooling=False;Integrated Security=false";
           echo "target_connection_string = $targetConnectionString" | Out-File -Append -FilePath $env:GITHUB_ENV
 
-      - name: Prepare SQL Server Instance
+      - name: Check vars
         shell: pwsh
         run: |
 
           Write-Host $env:some_other_var;
           Write-Host $env:target_connection_string;
-        env:
-          some_other_var: ${{ env.some_other_var }}
-          target_connection_string: ${{ env.target_connection_string }}
+        # env:
+        #   some_other_var: ${{ env.some_other_var }}
+        #   target_connection_string: ${{ env.target_connection_string }}
 
       - name: Azure SQL Deploy
         uses: Azure/sql-action@v2

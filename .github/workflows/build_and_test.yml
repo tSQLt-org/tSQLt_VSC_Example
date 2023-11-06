@@ -136,29 +136,29 @@ jobs:
         Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
 
         Invoke-Sqlcmd -InputFile "./tSQLt/PrepareServer.sql" -ServerInstance $env:containerFQDN -Username $env:containerUser -Password $env:containerPassword
-
-        $targetConnectionString="Data Source="+$env:containerFQDN+";User ID="+$env:containerUser+";Password="+$env:containerPassword+";Pooling=False;Integrated Security=false;Initial Catalog=tempdb;";
-        echo "target_connection_string=$targetConnectionString" | Out-File -Append -FilePath $env:GITHUB_ENV
-
-    - name: Check vars
-      shell: pwsh
-      run: |
-
-        Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
-        Write-Host "target_connection_string = $env:target_connection_string";
-        Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
         
     - name: Deploy DACPACs
       shell: pwsh
       run: |
         $dacpacFiles = $env:DACPAC_FILES -split "," | ForEach-Object { $_.Trim() }
 
+        $createNewDatabase = True
         foreach ($dacpacFile in $dacpacFiles) {
           $dacpacPath = Join-Path $env:DACPACS_PATH $dacpacFile
           $databaseName = $env:TARGETDATABASE
 
           # Call SqlPackage to deploy the .dacpac
-          & "$env:SQLPACKAGEPATH" /Action:Publish /TargetConnectionString:"$env:target_connection_string" /TargetDatabaseName:"$databaseName" /SourceFile:"$dacpacPath"
+  
+          $arguments = @(
+            '/Action:Publish',
+            "/TargetServerName:`"$env:containerFQDN`"",
+            "/TargetDatabaseName:`"$databaseName`"",
+            "/TargetUser:`"$env:containerUser`"",
+            "/TargetPassword:`"$env:containerPassword`"",
+            "/SourceFile:`"$dacpacPath`""
+            "/p:CreateNewDatabase=$createNewDatabase"
+          )
+          & "$env:SQLPACKAGEPATH" $arguments
 
           # Check if SqlPackage was successful
           if ($LASTEXITCODE -ne 0) {
@@ -168,6 +168,7 @@ jobs:
           } else {
               Write-Host "Deployment succeeded for $dacpacFile in $databaseName"
           }
+          $createNewDatabase = False
         }
         
   validate:

@@ -118,7 +118,7 @@ jobs:
         Write-Host "Container Password: "$containerPassword;
         Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
 
-        Write-Host ('::set-output name=containerFQDN::'+$containerFQDN);
+        echo "containerFQDN=$containerFQDN" | Out-File -Append -Encoding utf8 -FilePath $env:GITHUB_ENV
       env:
         containerName: ${{ steps.create-container.outputs.dataContainerName }}
         containerHost: ${{ steps.create-container.outputs.dataContainerHost }}

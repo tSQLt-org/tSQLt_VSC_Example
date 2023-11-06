@@ -52,11 +52,11 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: dacpac
-        path: $env:DACPACS_PATH
+        path: $DACPACS_PATH
 
     - name: List File In Artifact
       run: |
-        cd $env:DACPACS_PATH
+        cd $DACPACS_PATH
         ls -laR
       
   create_ci_mssql_instance:
@@ -120,7 +120,7 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: dacpac
-        path: $env:DACPACS_PATH
+        path: $DACPACS_PATH
 
     - name: Prepare SQL Server Instance
       shell: pwsh

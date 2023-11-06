@@ -12,7 +12,11 @@ env:
   SPAWNDATAIMAGE: "mssql-empty:v2019"
   TARGETDATABASE: "tSQLtVSCTemplate"
   # If this SQLPACKAGEPATH starts failing, use the "Find SqlPackage.exe" workflow to find the new path.
-  SQLPACKAGEPATH: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\Common7\\IDE\\Extensions\\Microsoft\\SQLDB\\DAC\\"
+  SQLPACKAGEPATH: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\Common7\\IDE\\Extensions\\Microsoft\\SQLDB\\DAC\\SqlPackage.exe"
+
+  DACPACS_PATH: ./dacpac_output  
+  DACPAC_FILES: 'Demo.dacpac, tSQLt.2019.dacpac, Tests.dacpac' #In deployment order
+
 
 jobs:
 
@@ -48,11 +52,11 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: dacpac
-        path: ./build_output/
+        path: $env:DACPACS_PATH
 
     - name: List File In Artifact
       run: |
-        cd ./build_output
+        cd $env:DACPACS_PATH
         ls -laR
       
   create_ci_mssql_instance:
@@ -116,7 +120,7 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: dacpac
-        path: ./build_output/
+        path: $env:DACPACS_PATH
 
     - name: Prepare SQL Server Instance
       shell: pwsh
@@ -143,37 +147,29 @@ jobs:
         Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
         Write-Host "target_connection_string = $env:target_connection_string";
         Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
-
-      env:
-        tcs: ${{ env.target_connection_string }}
-
-    - name: Azure SQL Deploy
-      uses: Azure/sql-action@v2
-      with:
-        # The connection string, including authentication information, for the Azure SQL Server database.
-        connection-string: ${{ env.target_connection_string }}
-        # Path to DACPAC file to deploy
-        path: ./build_output/Demo.dacpac
-        action: publish
-        # additional SqlPackage arguments
-        arguments: /DiagnosticsFile:./build_output/DiagnosticLogDemo.log /TargetDatabaseName:Demo
-      
-    - uses: actions/upload-artifact@v2
-      with:
-        name: 'DiagnosticLog'
-        path: 'DatabaseProjectAdventureWorksLT/DiagnosticLog*.log'
-
-    - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.0.3
-      # Runs a set of commands using the runners shell
-    - name: Build Database Solution
+        
+    - name: Deploy DACPACs
       shell: pwsh
       run: |
-        msbuild -version
+        $dacpacFiles = $env:DACPAC_FILES -split "," | ForEach-Object { $_.Trim() }
 
-        $targetConnectionString = "Data Source="+$env:containerFQDN+";User ID="+$env:containerUser+";Password="+$env:containerPassword+";Pooling=False;Integrated Security=false";
-        msbuild.exe .\Tests\Tests.sqlproj -p:Configuration=Debug -p:TargetConnectionString="$targetConnectionString" -p:TargetDatabase="$env:targetDatabase" -p:CreateNewDatabase="true" -t:Build -t:Deploy
+        for ($dacpacFile in $dacpacFiles) {
+          $dacpacPath = Join-Path $env:DACPACS_PATH $dacpacFile
+          $databaseName = $env:TARGETDATABASE
 
+          # Call SqlPackage to deploy the .dacpac
+          & "$env:SQLPACKAGEPATH" /Action:Publish /TargetConnectionString:"$env:CONNECTION_STRING" /TargetDatabaseName:"$databaseName" /SourceFile:"$dacpacPath"
+
+          # Check if SqlPackage was successful
+          if ($LASTEXITCODE -ne 0) {
+              Write-Error "Deployment failed for $dacpacFile in $databaseName"
+              # Exit the script on failure
+              exit $LASTEXITCODE
+          } else {
+              Write-Host "Deployment succeeded for $dacpacFile in $databaseName"
+          }
+        }
+        
   validate:
     name: Validate Database Solution
     needs: [deploy, create_ci_mssql_instance]

@@ -61,7 +61,7 @@ jobs:
         $expectedDacpacs = $env:DACPAC_FILES -split "," | ForEach-Object { $_.Trim() }
         
         # Get the list of actual .dacpac files from the directory
-        $actualDacpacs = Get-ChildItem -Path $env.DACPACS_PATH -Filter *.dacpac | ForEach-Object { $_.Name }
+        $actualDacpacs = Get-ChildItem -Path "$env:DACPACS_PATH" -Filter "*.dacpac" | ForEach-Object { $_.Name }
         
         $results = @{}
         $nonMatchingFilesExist = $false

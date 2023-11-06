@@ -153,7 +153,7 @@ jobs:
       run: |
         $dacpacFiles = $env:DACPAC_FILES -split "," | ForEach-Object { $_.Trim() }
 
-        for ($dacpacFile in $dacpacFiles) {
+        foreach ($dacpacFile in $dacpacFiles) {
           $dacpacPath = Join-Path $env:DACPACS_PATH $dacpacFile
           $databaseName = $env:TARGETDATABASE
 

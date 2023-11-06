@@ -1,0 +1,23 @@
+name: Find SqlPackage.exe
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  locate:
+    name: Find SqlPackage.exe
+    runs-on: windows-latest
+
+    steps:
+      - name: find sqlpackage
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          Get-ChildItem -Recurse -Filter "sqlpackage.exe" -ErrorAction SilentlyContinue | ForEach-Object {
+            Write-Host $_.FullName
+          }
+        working-directory: C:\Program Files\
+
+
+    

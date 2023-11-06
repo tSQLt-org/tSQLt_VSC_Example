@@ -142,7 +142,7 @@ jobs:
       run: |
         $dacpacFiles = $env:DACPAC_FILES -split "," | ForEach-Object { $_.Trim() }
 
-        $createNewDatabase = True
+        $createNewDatabase = $true
         foreach ($dacpacFile in $dacpacFiles) {
           $dacpacPath = Join-Path $env:DACPACS_PATH $dacpacFile
           $databaseName = $env:TARGETDATABASE
@@ -168,7 +168,7 @@ jobs:
           } else {
               Write-Host "Deployment succeeded for $dacpacFile in $databaseName"
           }
-          $createNewDatabase = False
+          $createNewDatabase = $false
         }
         
   validate:

@@ -7,13 +7,13 @@ on:
     - 'main'
 
   workflow_dispatch:
-  # Allows you to run this workflow manually from the Actions tab
 
 env:
   SPAWNDATAIMAGE: "mssql-empty:v2019"
   TARGETDATABASE: "tSQLtVSCTemplate"
+  # If this SQLPACKAGEPATH starts failing, use the "Find SqlPackage.exe" workflow to find the new path.
+  SQLPACKAGEPATH: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\Common7\\IDE\\Extensions\\Microsoft\\SQLDB\\DAC\\"
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
   build:
@@ -38,65 +38,60 @@ jobs:
   checkartifact:
     name: Inspect Artifact
     needs: [build]
-
     runs-on: ubuntu-latest
 
-
-
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Download DACPAC Artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: dacpac
-          path: ./build_output/
+    - name: Download DACPAC Artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: dacpac
+        path: ./build_output/
 
-      - name: List File In Artifact
-        run: |
-          cd ./build_output
-          ls -laR
+    - name: List File In Artifact
+      run: |
+        cd ./build_output
+        ls -laR
       
   create_ci_mssql_instance:
     name: Create CI MSSQL Instance
     runs-on: ubuntu-latest
     
     steps:
+    - name: Create Data Container
+      id: create-container
+      uses: red-gate/create-spawn-data-container/@v1.1
+      with:
+        dataImage: ${{ env.SPAWNDATAIMAGE }}
+        lifetime: '15m'
+        useMasking: 'false'
+      env:
+        SPAWNCTL_ACCESS_TOKEN: ${{ secrets.SPAWNCTL_ACCESS_TOKEN }}
 
-      - name: Create Data Container
-        id: create-container
-        uses: red-gate/create-spawn-data-container/@v1.1
-        with:
-          dataImage: ${{ env.SPAWNDATAIMAGE }}
-          lifetime: '15m'
-          useMasking: 'false'
-        env:
-          SPAWNCTL_ACCESS_TOKEN: ${{ secrets.SPAWNCTL_ACCESS_TOKEN }}
+    - name: Create Container Variables
+      id: create-container-vars
+      shell: pwsh
+      run: |
+        $containerFQDN =$env:containerHost+", "+$env:containerPort;
+        $containerUser = $env:containerUsername;
+        $containerPassword = $env:containerPassword;
 
-      - name: Create Container Variables
-        id: create-container-vars
-        shell: pwsh
-        run: |
-          $containerFQDN =$env:containerHost+", "+$env:containerPort;
-          $containerUser = $env:containerUsername;
-          $containerPassword = $env:containerPassword;
+        Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
+        Write-Host "Container Name: "$env:containerName;
+        Write-Host "Container FQDN: "$containerFQDN;
+        Write-Host "Container Username: "$containerUser;
+        Write-Host "Container Password: "$containerPassword;
+        Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
 
-          Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
-          Write-Host "Container Name: "$env:containerName;
-          Write-Host "Container FQDN: "$containerFQDN;
-          Write-Host "Container Username: "$containerUser;
-          Write-Host "Container Password: "$containerPassword;
-          Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
-
-          Write-Host ('::set-output name=containerFQDN::'+$containerFQDN);
-        env:
-          containerName: ${{ steps.create-container.outputs.dataContainerName }}
-          containerHost: ${{ steps.create-container.outputs.dataContainerHost }}
-          containerPort: ${{ steps.create-container.outputs.dataContainerPort }}
-          containerUsername: ${{ steps.create-container.outputs.dataContainerUsername }}
-          containerPassword: ${{ steps.create-container.outputs.dataContainerPassword }}
-
+        Write-Host ('::set-output name=containerFQDN::'+$containerFQDN);
+      env:
+        containerName: ${{ steps.create-container.outputs.dataContainerName }}
+        containerHost: ${{ steps.create-container.outputs.dataContainerHost }}
+        containerPort: ${{ steps.create-container.outputs.dataContainerPort }}
+        containerUsername: ${{ steps.create-container.outputs.dataContainerUsername }}
+        containerPassword: ${{ steps.create-container.outputs.dataContainerPassword }}
     outputs:
       containerFQDN: ${{ steps.create-container-vars.outputs.containerFQDN }}
       containerUser: ${{ steps.create-container.outputs.dataContainerUsername }}
@@ -106,7 +101,6 @@ jobs:
   deploy:
     name: Deploy Database Project
     needs: [build, create_ci_mssql_instance]
-
     runs-on: windows-latest
 
     env:
@@ -114,79 +108,75 @@ jobs:
       containerUser: ${{ needs.create_ci_mssql_instance.outputs.containerUser }}
       containerPassword: ${{ needs.create_ci_mssql_instance.outputs.containerPassword }}
 
-
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Download DACPAC Artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: dacpac
-          path: ./build_output/
+    - name: Download DACPAC Artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: dacpac
+        path: ./build_output/
 
-      - name: Prepare SQL Server Instance
-        shell: pwsh
-        run: |
+    - name: Prepare SQL Server Instance
+      shell: pwsh
+      run: |
 
-          Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
-          Write-Host "";
+        Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
+        Write-Host "";
 
-          $DS = Invoke-Sqlcmd -ConnectionTimeout 600 -Query "SELECT SUSER_NAME() U,SYSDATETIME() T,@@VERSION V;" -ServerInstance $env:containerFQDN -Username $env:containerUser -Password $env:containerPassword -As DataSet
-          $DS.Tables[0].Rows | %{ echo "{ $($_['U']), $($_['T']), $($_['V']) }" };
+        $DS = Invoke-Sqlcmd -ConnectionTimeout 600 -Query "SELECT SUSER_NAME() U,SYSDATETIME() T,@@VERSION V;" -ServerInstance $env:containerFQDN -Username $env:containerUser -Password $env:containerPassword -As DataSet
+        $DS.Tables[0].Rows | %{ echo "{ $($_['U']), $($_['T']), $($_['V']) }" };
 
-          Write-Host "";
-          Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
+        Write-Host "";
+        Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
 
-          Invoke-Sqlcmd -InputFile "./tSQLt/PrepareServer.sql" -ServerInstance $env:containerFQDN -Username $env:containerUser -Password $env:containerPassword
+        Invoke-Sqlcmd -InputFile "./tSQLt/PrepareServer.sql" -ServerInstance $env:containerFQDN -Username $env:containerUser -Password $env:containerPassword
 
-          $targetConnectionString="Data Source="+$env:containerFQDN+";User ID="+$env:containerUser+";Password="+$env:containerPassword+";Pooling=False;Integrated Security=false;Initial Catalog=tempdb;";
-          echo "target_connection_string=$targetConnectionString" | Out-File -Append -FilePath $env:GITHUB_ENV
+        $targetConnectionString="Data Source="+$env:containerFQDN+";User ID="+$env:containerUser+";Password="+$env:containerPassword+";Pooling=False;Integrated Security=false;Initial Catalog=tempdb;";
+        echo "target_connection_string=$targetConnectionString" | Out-File -Append -FilePath $env:GITHUB_ENV
 
-      - name: Check vars
-        shell: pwsh
-        run: |
+    - name: Check vars
+      shell: pwsh
+      run: |
 
-          Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
-          Write-Host "target_connection_string = $env:target_connection_string";
-          Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
+        Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
+        Write-Host "target_connection_string = $env:target_connection_string";
+        Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
 
-        env:
-          tcs: ${{ env.target_connection_string }}
+      env:
+        tcs: ${{ env.target_connection_string }}
 
-      - name: Azure SQL Deploy
-        uses: Azure/sql-action@v2
-        with:
-          # The connection string, including authentication information, for the Azure SQL Server database.
-          connection-string: ${{ env.target_connection_string }}
-          # Path to DACPAC file to deploy
-          path: ./build_output/Demo.dacpac
-          action: publish
-          # additional SqlPackage arguments
-          arguments: /DiagnosticsFile:./build_output/DiagnosticLogDemo.log /TargetDatabaseName:Demo
-        
-      - uses: actions/upload-artifact@v2
-        with:
-          name: 'DiagnosticLog'
-          path: 'DatabaseProjectAdventureWorksLT/DiagnosticLog*.log'
+    - name: Azure SQL Deploy
+      uses: Azure/sql-action@v2
+      with:
+        # The connection string, including authentication information, for the Azure SQL Server database.
+        connection-string: ${{ env.target_connection_string }}
+        # Path to DACPAC file to deploy
+        path: ./build_output/Demo.dacpac
+        action: publish
+        # additional SqlPackage arguments
+        arguments: /DiagnosticsFile:./build_output/DiagnosticLogDemo.log /TargetDatabaseName:Demo
+      
+    - uses: actions/upload-artifact@v2
+      with:
+        name: 'DiagnosticLog'
+        path: 'DatabaseProjectAdventureWorksLT/DiagnosticLog*.log'
 
-      - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.0.3
-        # Runs a set of commands using the runners shell
-      - name: Build Database Solution
-        shell: pwsh
-        run: |
-          msbuild -version
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.3
+      # Runs a set of commands using the runners shell
+    - name: Build Database Solution
+      shell: pwsh
+      run: |
+        msbuild -version
 
-          $targetConnectionString = "Data Source="+$env:containerFQDN+";User ID="+$env:containerUser+";Password="+$env:containerPassword+";Pooling=False;Integrated Security=false";
-          msbuild.exe .\Tests\Tests.sqlproj -p:Configuration=Debug -p:TargetConnectionString="$targetConnectionString" -p:TargetDatabase="$env:targetDatabase" -p:CreateNewDatabase="true" -t:Build -t:Deploy
-
+        $targetConnectionString = "Data Source="+$env:containerFQDN+";User ID="+$env:containerUser+";Password="+$env:containerPassword+";Pooling=False;Integrated Security=false";
+        msbuild.exe .\Tests\Tests.sqlproj -p:Configuration=Debug -p:TargetConnectionString="$targetConnectionString" -p:TargetDatabase="$env:targetDatabase" -p:CreateNewDatabase="true" -t:Build -t:Deploy
 
   validate:
     name: Validate Database Solution
     needs: [deploy, create_ci_mssql_instance]
-
-    # The type of runner that the job will run on
     runs-on: windows-latest
 
     env:
@@ -194,43 +184,41 @@ jobs:
       containerUser: ${{ needs.create_ci_mssql_instance.outputs.containerUser }}
       containerPassword: ${{ needs.create_ci_mssql_instance.outputs.containerPassword }}
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+    - name: Run Tests
+      shell: pwsh
+      run: |
+        $query = "EXEC tSQLt.SetSummaryError @SummaryError=0;EXEC tSQLt.SetVerbose @Verbose = 1;EXEC tSQLt.RunAll;";
 
-      - name: Run Tests
-        shell: pwsh
-        run: |
-          $query = "EXEC tSQLt.SetSummaryError @SummaryError=0;EXEC tSQLt.SetVerbose @Verbose = 1;EXEC tSQLt.RunAll;";
+        Invoke-Sqlcmd -Query $query `
+                      -ServerInstance $env:containerFQDN -Database $env:targetDatabase `
+                      -Username $env:containerUser -Password $env:containerPassword `
+                      -OutputSqlErrors $true -AbortOnError -verbose;
 
-          Invoke-Sqlcmd -Query $query `
-                        -ServerInstance $env:containerFQDN -Database $env:targetDatabase `
-                        -Username $env:containerUser -Password $env:containerPassword `
-                        -OutputSqlErrors $true -AbortOnError -verbose;
+        $dataSet = Invoke-Sqlcmd -Query "EXEC tSQLt.XMLResultFormatter;" `
+                            -ServerInstance $env:containerFQDN -Database $env:targetDatabase `
+                            -Username $env:containerUser -Password $env:containerPassword `
+                            -As DataSet -OutputSqlErrors $true -AbortOnError -verbose
 
-          $dataSet = Invoke-Sqlcmd -Query "EXEC tSQLt.XMLResultFormatter;" `
-                              -ServerInstance $env:containerFQDN -Database $env:targetDatabase `
-                              -Username $env:containerUser -Password $env:containerPassword `
-                              -As DataSet -OutputSqlErrors $true -AbortOnError -verbose
+        New-Item -Path "." -Name "TestResults" -ItemType "directory"
+        $dataSet.Tables[0].Item(0)|Out-File "./TestResults/TestResults.xml";                
 
-          New-Item -Path "." -Name "TestResults" -ItemType "directory"
-          $dataSet.Tables[0].Item(0)|Out-File "./TestResults/TestResults.xml";                
+    - name: Upload Test Results Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        if-no-files-found: error
+        name: TestResults
+        path: ".\\TestResults\\"
+        retention-days: 90
 
-      - name: Upload Test Results Artifact
-        uses: actions/upload-artifact@v2
-        with:
-          if-no-files-found: error
-          name: TestResults
-          path: ".\\TestResults\\"
-          retention-days: 90
+    - name: Check for Failures
+      shell: pwsh
+      run: |
+        $query = "EXEC tSQLt.SetSummaryError @SummaryError=1;EXEC tSQLt.DefaultResultFormatter;";
 
-      - name: Check for Failures
-        shell: pwsh
-        run: |
-          $query = "EXEC tSQLt.SetSummaryError @SummaryError=1;EXEC tSQLt.DefaultResultFormatter;";
-
-          Invoke-Sqlcmd -Query $query `
-                        -ServerInstance $env:containerFQDN -Database $env:targetDatabase `
-                        -Username $env:containerUser -Password $env:containerPassword `
-                        -OutputSqlErrors $true -AbortOnError -verbose;
+        Invoke-Sqlcmd -Query $query `
+                      -ServerInstance $env:containerFQDN -Database $env:targetDatabase `
+                      -Username $env:containerUser -Password $env:containerPassword `
+                      -OutputSqlErrors $true -AbortOnError -verbose;
 
           

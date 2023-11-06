@@ -35,11 +35,11 @@ jobs:
         name: dacpac
         path: ./output/*.dacpac
 
-  deploytp:
-    name: Deploy Database Project
+  checkartifact:
+    name: Inspect Artifact
     needs: [build]
 
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
 
 
@@ -52,6 +52,11 @@ jobs:
         with:
           name: dacpac
           path: ./build_output/
+
+      - name: List File In Artifact
+        run: |
+          cd ./build_output
+          ls -laR
       
   create_ci_mssql_instance:
     name: Create CI MSSQL Instance
@@ -135,7 +140,7 @@ jobs:
 
           Invoke-Sqlcmd -InputFile "./tSQLt/PrepareServer.sql" -ServerInstance $env:containerFQDN -Username $env:containerUser -Password $env:containerPassword
 
-          $targetConnectionString="Data Source="+$env:containerFQDN+";User ID="+$env:containerUser+";Password="+$env:containerPassword+";Pooling=False;Integrated Security=false";
+          $targetConnectionString="Data Source="+$env:containerFQDN+";User ID="+$env:containerUser+";Password="+$env:containerPassword+";Pooling=False;Integrated Security=false;Initial Catalog=tempdb;";
           echo "target_connection_string=$targetConnectionString" | Out-File -Append -FilePath $env:GITHUB_ENV
 
       - name: Check vars

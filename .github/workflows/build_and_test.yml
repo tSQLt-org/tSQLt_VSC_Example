@@ -158,7 +158,7 @@ jobs:
           $databaseName = $env:TARGETDATABASE
 
           # Call SqlPackage to deploy the .dacpac
-          & "$env:SQLPACKAGEPATH" /Action:Publish /TargetConnectionString:"$env:CONNECTION_STRING" /TargetDatabaseName:"$databaseName" /SourceFile:"$dacpacPath"
+          & "$env:SQLPACKAGEPATH" /Action:Publish /TargetConnectionString:"$env:target_connection_string" /TargetDatabaseName:"$databaseName" /SourceFile:"$dacpacPath"
 
           # Check if SqlPackage was successful
           if ($LASTEXITCODE -ne 0) {

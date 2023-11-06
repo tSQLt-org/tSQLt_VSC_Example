@@ -52,7 +52,7 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: dacpac
-        path: $DACPACS_PATH
+        path: ${{ env.DACPACS_PATH }}
 
     - name: List File In Artifact
       run: |
@@ -120,7 +120,7 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: dacpac
-        path: $DACPACS_PATH
+        path: ${{ env.DACPACS_PATH }}
 
     - name: Prepare SQL Server Instance
       shell: pwsh

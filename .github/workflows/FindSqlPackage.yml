@@ -1,7 +1,6 @@
 name: Find SqlPackage.exe
 
 on:
-  push:
   workflow_dispatch:
 
 jobs:

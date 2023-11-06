@@ -135,23 +135,18 @@ jobs:
 
           Invoke-Sqlcmd -InputFile "./tSQLt/PrepareServer.sql" -ServerInstance $env:containerFQDN -Username $env:containerUser -Password $env:containerPassword
 
-          $someOtherVar = "abc=12345;de f=67890;"
-          echo "some_other_var = $someOtherVar" | Out-File -Append -FilePath $env:GITHUB_ENV
-
-          $targetConnectionString = "Data Source="+$env:containerFQDN+";User ID="+$env:containerUser+";Password="+$env:containerPassword+";Pooling=False;Integrated Security=false";
-          echo "target_connection_string = $targetConnectionString" | Out-File -Append -FilePath $env:GITHUB_ENV
+          $targetConnectionString="Data Source="+$env:containerFQDN+";User ID="+$env:containerUser+";Password="+$env:containerPassword+";Pooling=False;Integrated Security=false";
+          echo "target_connection_string=$targetConnectionString" | Out-File -Append -FilePath $env:GITHUB_ENV
 
       - name: Check vars
         shell: pwsh
         run: |
 
           Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
-          Write-Host "some_other_var = $env:some_other_var";
           Write-Host "target_connection_string = $env:target_connection_string";
           Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
 
         env:
-          sov: ${{ env.some_other_var }}
           tcs: ${{ env.target_connection_string }}
 
       - name: Azure SQL Deploy

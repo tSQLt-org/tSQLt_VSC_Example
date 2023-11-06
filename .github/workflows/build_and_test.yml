@@ -15,7 +15,7 @@ env:
   SQLPACKAGEPATH: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\Common7\\IDE\\Extensions\\Microsoft\\SQLDB\\DAC\\SqlPackage.exe"
 
   DACPACS_PATH: ./dacpac_output  
-  DACPAC_FILES: 'Demo.dacpac, tSQLt.2019.dacpac, Tests.dacpac' #In deployment order
+  DACPAC_FILES: 'Demo.dacpac, tSQLt.2019.dacpac, Test.dacpac' #In deployment order
 
 
 jobs:
@@ -55,10 +55,39 @@ jobs:
         path: ${{ env.DACPACS_PATH }}
 
     - name: List File In Artifact
+      shell: pwsh
       run: |
-        cd $DACPACS_PATH
-        ls -laR
-      
+        # Convert the comma-separated list of expected filenames into an array
+        $expectedDacpacs = $env:DACPAC_FILES -split "," | ForEach-Object { $_.Trim() }
+        
+        # Get the list of actual .dacpac files from the directory
+        $actualDacpacs = Get-ChildItem -Path $env.DACPACS_PATH -Filter *.dacpac | ForEach-Object { $_.Name }
+        
+        $results = @{}
+        $nonMatchingFilesExist = $false
+        
+        foreach ($expected in $expectedDacpacs) {
+          if ($actualDacpacs -contains $expected) {
+            $results[$expected] = 'match'
+          } else {
+            $results[$expected] = 'missing'
+            $nonMatchingFilesExist = $true
+          }
+        }
+        foreach ($actual in $actualDacpacs) {
+          if ($expectedDacpacs -notcontains $actual) {
+            $results[$actual] = 'unexpected'
+            $nonMatchingFilesExist = $true
+          }
+        }
+
+        $results.GetEnumerator() | Format-Table -AutoSize | Out-String | Write-Host
+        
+        if ($nonMatchingFilesExist) {
+          Write-Error "There are missing or unexpected .dacpac files. Failing the job."
+          exit 1
+        }
+
   create_ci_mssql_instance:
     name: Create CI MSSQL Instance
     runs-on: ubuntu-latest
@@ -155,7 +184,7 @@ jobs:
             "/TargetDatabaseName:`"$databaseName`"",
             "/TargetUser:`"$env:containerUser`"",
             "/TargetPassword:`"$env:containerPassword`"",
-            "/SourceFile:`"$dacpacPath`""
+            "/SourceFile:`"$dacpacPath`"",
             "/p:CreateNewDatabase=$createNewDatabase"
           )
           & "$env:SQLPACKAGEPATH" $arguments

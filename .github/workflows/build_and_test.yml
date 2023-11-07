@@ -119,6 +119,7 @@ jobs:
         Write-Host "✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ✨   ";
 
         echo "containerFQDN=$containerFQDN" | Out-File -Append -Encoding utf8 -FilePath $env:GITHUB_ENV
+        echo "containerFQDN=$containerFQDN" | Out-File -Append -Encoding utf8 -FilePath $env:GITHUB_OUTPUT
       env:
         containerName: ${{ steps.create-container.outputs.dataContainerName }}
         containerHost: ${{ steps.create-container.outputs.dataContainerHost }}

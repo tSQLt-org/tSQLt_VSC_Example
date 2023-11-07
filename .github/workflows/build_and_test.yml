@@ -229,7 +229,7 @@ jobs:
         $dataSet.Tables[0].Item(0)|Out-File "./TestResults/TestResults.xml";                
 
     - name: Upload Test Results Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         if-no-files-found: error
         name: TestResults

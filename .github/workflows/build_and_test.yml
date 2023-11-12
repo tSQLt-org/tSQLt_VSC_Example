@@ -2,9 +2,11 @@
 name: Build_And_Test
 
 on:
-  push:
-
-  workflow_dispatch:
+  push:  # Triggered on every commit pushed to any branch
+  pull_request:  # Triggered when a pull request is created or updated
+  workflow_dispatch:  # Allows the workflow to be manually triggered from the GitHub UI
+  schedule:
+    - cron: '0 * * * *'  # Runs once every hour at the beginning of the hour
 
 env:
   SPAWNDATAIMAGE: "mssql-empty:v2019"

@@ -20,7 +20,7 @@ GO
 
 
 GO
-CREATE FUNCTION [returns 12%](@amount DECIMAL(13,2)) 
+CREATE FUNCTION RevisionReportTests.[returns 12%](@amount DECIMAL(13,2)) 
   RETURNS TABLE AS 
   RETURN SELECT @amount*.12 Discount;
 GO
@@ -28,12 +28,13 @@ CREATE PROCEDURE RevisionReportTests.[test uses dbo.GetDiscount to calculate dis
 AS
 BEGIN
   EXEC tSQLt.FakeTable 'dbo.Orders'
+  EXEC tSQLt.FakeFunction 'dbo.GetDiscount', 'RevisionReportTests.[returns 12%]';
   INSERT INTO dbo.Orders(Id,Total)VALUES(1,24),(2,30);
   SELECT Id, PreDiscountTotal, Discount, Total 
     INTO #actual
     FROM dbo.RevisionReport;
   SELECT TOP(0) A.* INTO #expected FROM #actual X LEFT JOIN #actual A ON 1=0;
-  INSERT INTO #expected VALUES(1,24,2.68,21.32),(2,30,3.90,26.10);
+  INSERT INTO #expected VALUES(1,24,2.88,21.12),(2,30,3.60,26.40);
   EXEC tSQLt.AssertEqualsTable '#expected','#actual';
 END;
 GO

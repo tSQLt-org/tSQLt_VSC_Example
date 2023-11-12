@@ -1,4 +1,11 @@
 #!/bin/bash
+
+# Requires "gh auth login" before execution if not logged in already
+gh auth status
+if ! gh auth status &> /dev/null; then
+    gh auth login
+fi
+
 cd "$(dirname "$0")"
 cd ..
 

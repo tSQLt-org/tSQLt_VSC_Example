@@ -1,6 +1,6 @@
-CREATE TABLE [dbo].[dbo.orders]
+CREATE TABLE dbo.Orders
 (
-  [Id] INT NOT NULL PRIMARY KEY,
+  Id INT NOT NULL PRIMARY KEY CLUSTERED,
   CustomerId INT NOT NULL,
   Total NUMERIC(13,2)
 )

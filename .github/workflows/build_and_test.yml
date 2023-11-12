@@ -5,6 +5,7 @@ on:
   push:  # Triggered on every commit pushed to any branch
   pull_request:  # Triggered when a pull request is created or updated
   workflow_dispatch:  # Allows the workflow to be manually triggered from the GitHub UI
+  create:  # Triggered when a new branch is created
   schedule:
     - cron: '0 * * * *'  # Runs once every hour at the beginning of the hour
 

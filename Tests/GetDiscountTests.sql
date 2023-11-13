@@ -1,3 +1,10 @@
+/*----------------------------------------------
+-- ** Requirements **
+----------------------------------------------
+-- For All Orders:
+-- If Order Total is  $0 to  $50:  No Discount
+-- If Order Total is $50 to $50K: 10% Discount
+-----------------------------------------------*/
 /*--
 EXEC tSQLt.DropClass 'GetDiscountTests';
 --*/

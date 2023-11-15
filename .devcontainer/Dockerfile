@@ -10,9 +10,9 @@ RUN apt-get update
 
 CMD code --install-extension ms-mssql.mssql
 
-USER vscode
-RUN curl https://run.spawn.cc/install | sh
-ENV PATH="/home/vscode/.spawnctl/bin:$PATH"
+# USER vscode
+# RUN curl https://run.spawn.cc/install | sh
+# ENV PATH="/home/vscode/.spawnctl/bin:$PATH"
 
 USER root
 RUN apt-get update && apt-get install -y curl gnupg software-properties-common \
